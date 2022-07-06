@@ -1,0 +1,67 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_form_builder/flutter_form_builder.dart';
+import 'package:form_validator/form_validator.dart';
+import 'package:pc_parts_list/common/widgets/validation_builder_extension.dart';
+
+class FormBuilderTemplateField extends FormBuilderTextField {
+  FormBuilderTemplateField({
+    required super.name,
+    super.controller,
+    super.key,
+    super.cursorColor,
+    super.toolbarOptions,
+    super.cursorRadius,
+    super.cursorWidth,
+    super.enabled,
+    super.keyboardType,
+    super.keyboardAppearance,
+    super.autofocus,
+    super.enableSuggestions,
+    super.enableInteractiveSelection,
+    super.dragStartBehavior,
+    super.expands,
+    super.maxLines,
+    super.minLines,
+    super.maxLength,
+    super.onSubmitted,
+    super.onChanged,
+    super.onEditingComplete,
+    super.onReset,
+    super.onSaved,
+    super.onTap,
+    super.readOnly,
+    super.maxLengthEnforcement,
+    super.mouseCursor,
+    super.obscureText,
+    super.style,
+    super.obscuringCharacter,
+    super.scrollPhysics,
+    super.scrollController,
+    super.scrollPadding,
+    super.selectionHeightStyle,
+    super.selectionWidthStyle,
+    super.showCursor,
+    super.smartDashesType,
+    super.smartQuotesType,
+    super.strutStyle,
+    super.textAlign,
+    super.textAlignVertical,
+    super.textCapitalization,
+    super.textDirection,
+    super.textInputAction,
+    super.inputFormatters,
+    super.autocorrect,
+    super.autofillHints,
+    super.autovalidateMode,
+    super.buildCounter,
+    super.focusNode,
+    super.initialValue,
+    super.valueTransformer,
+    super.decoration,
+    FormFieldValidator<String>? validator,
+  }) : super(
+          validator: ValidationBuilder()
+              .maybeAdd(validator)
+              .build(),
+        );
+}

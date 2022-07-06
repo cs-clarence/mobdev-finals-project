@@ -1,38 +1,52 @@
 part of "./user.dart";
 
+@JsonSerializable()
 @immutable
-class Account {
+class AccountModel {
   final String userName;
   final String email;
   final String password;
+  final int accessLevel;
 
-  const Account({
+  const AccountModel({
     required this.userName,
     required this.email,
     required this.password,
+    required this.accessLevel,
   });
+
+  factory AccountModel.fromJson(Map<String, dynamic> json) =>
+      _$AccountModelFromJson(json);
+
+  Map<String, dynamic> toJson() => _$AccountModelToJson(this);
 }
 
+@JsonSerializable()
 @immutable
-class Profile {
+class ProfileModel {
   final String firstName;
   final String lastName;
   final String? middleName;
   final String? nameSuffix;
-  const Profile({
+
+  const ProfileModel({
     required this.firstName,
     required this.lastName,
     this.middleName,
     this.nameSuffix,
   });
+
+  factory ProfileModel.fromJson(Map<String, dynamic> json) => _$ProfileModelFromJson(json);
+
+  Map<String, dynamic> toJson() => _$ProfileModelToJson(this);
 }
 
 @immutable
-class User {
-  final Account account;
-  final Profile profile;
+class UserModel {
+  final AccountModel account;
+  final ProfileModel profile;
 
-  const User({
+  const UserModel({
     required this.account,
     required this.profile,
   });

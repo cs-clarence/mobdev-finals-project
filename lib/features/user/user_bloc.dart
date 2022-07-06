@@ -14,7 +14,7 @@ class UserLoadInProgress extends UserState {
 }
 
 class UserLoadSuccess extends UserState {
-  final User user;
+  final UserModel user;
 
   const UserLoadSuccess({
     required this.user,
@@ -22,14 +22,10 @@ class UserLoadSuccess extends UserState {
 }
 
 class UserLoadFailure extends UserState {
-  final List<String> error;
-  final String userNameOrEmail;
-  final String password;
+  final List<String> errors;
 
   const UserLoadFailure({
-    required this.error,
-    required this.userNameOrEmail,
-    required this.password,
+    required this.errors,
   });
 }
 
@@ -68,6 +64,28 @@ class UserSignedUp extends UserEvent {
   });
 }
 
+class UserUpdated extends UserEvent {
+  final String userName;
+  final String? newUserName;
+  final String? newEmail;
+  final String? newPassword;
+  final String? newFirstName;
+  final String? newLastName;
+  final String? newMiddleName;
+  final String? newNameSuffix;
+
+  const UserUpdated({
+    required this.userName,
+    this.newUserName,
+    this.newEmail,
+    this.newPassword,
+    this.newFirstName,
+    this.newLastName,
+    this.newMiddleName,
+    this.newNameSuffix,
+  });
+}
+
 class UserLoggedOut extends UserEvent {
   const UserLoggedOut();
 }
@@ -81,11 +99,9 @@ class UserBloc extends Bloc<UserEvent, UserState> {
       final user =
           await _userRepository.findByEmailOrUserName(event.userNameOrEmail);
 
-      if (user == null) {
-        emit(UserLoadFailure(
-          error: const ["User not found"],
-          userNameOrEmail: event.userNameOrEmail,
-          password: event.password,
+      if (user == null || user.account.password != event.password) {
+        emit(const UserLoadFailure(
+          errors: ["Can't log in, check your credentials"],
         ));
       } else {
         emit(UserLoadSuccess(user: user));
@@ -94,13 +110,14 @@ class UserBloc extends Bloc<UserEvent, UserState> {
 
     on<UserSignedUp>((event, emit) async {
       emit(const UserLoadInProgress());
-      final user = User(
-        account: Account(
+      final user = UserModel(
+        account: AccountModel(
           userName: event.userName,
           email: event.email,
           password: event.password,
+          accessLevel: 0,
         ),
-        profile: Profile(
+        profile: ProfileModel(
           firstName: event.firstName,
           lastName: event.lastName,
           middleName: event.middleName,
@@ -108,12 +125,54 @@ class UserBloc extends Bloc<UserEvent, UserState> {
         ),
       );
       try {
-        await _userRepository.saveUser(user);
-      } on Exception {}
+        await _userRepository.save(
+          email: user.account.email,
+          firstName: user.profile.firstName,
+          lastName: user.profile.firstName,
+          nameSuffix: user.profile.nameSuffix,
+          password: user.account.password,
+          userName: user.account.userName,
+          accessLevel: user.account.accessLevel,
+          middleName: user.profile.middleName,
+        );
+        emit(UserLoadSuccess(user: user));
+      } on UserRepositoryException catch (e) {
+        emit(UserLoadFailure(
+          errors: [e.message],
+        ));
+      }
     });
 
     on<UserLoggedOut>((event, emit) {
       emit(const UserInitial());
+    });
+
+    on<UserUpdated>((event, emit) async {
+      emit(const UserLoadInProgress());
+      try {
+        await _userRepository.update(
+          userName: event.userName,
+          newPassword: event.newPassword,
+          newNameSuffix: event.newNameSuffix,
+          newMiddleName: event.newMiddleName,
+          newLastName: event.newLastName,
+          newFirstName: event.newFirstName,
+          newEmail: event.newEmail,
+          newUserName: event.newUserName,
+        );
+      } on UserRepositoryException catch (e) {
+        emit(
+          UserLoadFailure(
+            errors: [e.message],
+          ),
+        );
+      }
+
+      final user = await _userRepository.findByUserName(
+        event.newUserName ?? event.userName,
+      );
+
+      emit(UserLoadSuccess(user: user!));
     });
   }
 }
