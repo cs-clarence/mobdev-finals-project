@@ -1,6 +1,8 @@
 import 'dart:async';
+import 'dart:io';
 
 import "package:flutter/material.dart";
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import "package:go_router/go_router.dart";
 import 'package:pc_parts_list/common/widgets/confirmation_dialog.dart';
@@ -139,6 +141,27 @@ class _PartsListScreenState extends State<PartsListScreen>
                         title: const Text("About"),
                         onTap: () => context.pushNamed("about"),
                       ),
+                      const Divider(),
+                      ListTile(
+                        leading: const Icon(Icons.close),
+                        title: const Text("Exit"),
+                        onTap: () async {
+                          final shouldExit = await showDialog(
+                            context: context,
+                            builder: (context) => const ConfirmationDialog(
+                              titleText: "Exit Application?",
+                            ),
+                          );
+
+                          if (shouldExit != true) return;
+
+                          if (Platform.isAndroid) {
+                            SystemNavigator.pop(animated: true);
+                          } else {
+                            exit(0);
+                          }
+                        },
+                      ),
                     ],
                   ),
                 );
@@ -152,6 +175,32 @@ class _PartsListScreenState extends State<PartsListScreen>
                       ),
                       const ListTile(
                         title: Text("You are not logged in"),
+                      ),
+                      ListTile(
+                        leading: const Icon(Icons.login),
+                        title: const Text("Login"),
+                        onTap: () => context.goNamed("login"),
+                      ),
+                      const Divider(),
+                      ListTile(
+                        leading: const Icon(Icons.close),
+                        title: const Text("Exit"),
+                        onTap: () async {
+                          final shouldExit = await showDialog(
+                            context: context,
+                            builder: (context) => const ConfirmationDialog(
+                              titleText: "Exit Application?",
+                            ),
+                          );
+
+                          if (shouldExit != true) return;
+
+                          if (Platform.isAndroid) {
+                            SystemNavigator.pop(animated: true);
+                          } else {
+                            exit(0);
+                          }
+                        },
                       ),
                     ],
                   ),
