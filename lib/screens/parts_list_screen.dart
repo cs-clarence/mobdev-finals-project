@@ -119,7 +119,7 @@ class _PartsListScreenState extends State<PartsListScreen>
                         onTap: () async {
                           void logOut() {
                             context.read<UserBloc>().add(const UserLoggedOut());
-                            context.pop();
+                            context.goNamed("login");
                           }
 
                           final shouldLogOut = await showDialog<bool>(
@@ -213,141 +213,147 @@ class _PartsListScreenState extends State<PartsListScreen>
           ),
           body: SizedBox(
             width: double.infinity,
-            child: BlocBuilder<UserBloc, UserState>(builder: (context, state) {
-              if (state is UserInitial || state is UserLoadFailure) {
-                return Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Text("You are not logged in."),
-                      TextButton(
-                        onPressed: () {
-                          context.goNamed("login");
-                        },
-                        child: const Text("Login"),
-                      )
-                    ],
-                  ),
-                );
-              }
-              return BlocBuilder<PartsListsBloc, PartsListsState>(
-                builder: (context, state) {
-                  if (state is PartsListsLoadSuccess) {
-                    if (state.partsLists.isNotEmpty) {
-                      final partsLists = state.partsLists.toList();
+            child: BlocBuilder<UserBloc, UserState>(
+              builder: (context, state) {
+                if (state is UserInitial || state is UserLoadFailure) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Text("You are not logged in."),
+                        TextButton(
+                          onPressed: () {
+                            context.goNamed("login");
+                          },
+                          child: const Text("Login"),
+                        )
+                      ],
+                    ),
+                  );
+                }
+                return BlocBuilder<PartsListsBloc, PartsListsState>(
+                  builder: (context, state) {
+                    if (state is PartsListsLoadSuccess) {
+                      if (state.partsLists.isNotEmpty) {
+                        final partsLists = state.partsLists.toList();
 
-                      return ListView.builder(
-                        itemCount: partsLists.length,
-                        itemBuilder: (context, index) {
-                          final partsList = partsLists[index];
-                          double price = 0.0;
+                        return ListView.builder(
+                          itemCount: partsLists.length,
+                          itemBuilder: (context, index) {
+                            final partsList = partsLists[index];
+                            double price = 0.0;
 
-                          for (final pcPart in partsList.parts) {
-                            price += pcPart.price;
-                          }
+                            for (final pcPart in partsList.parts) {
+                              price += pcPart.price;
+                            }
 
-                          return ListTile(
-                            title: Text(partsList.name),
-                            subtitle: Text("PHP $price"),
-                            trailing: PopupMenuButton<String>(
-                              onSelected: (value) async {
-                                if (value == "edit") {
-                                  context.goNamed("parts-list-edit", params: {
-                                    "partsListId": partsList.id,
-                                  });
-                                } else if (value == "delete") {
-                                  final userName =
-                                      (userBloc.state as UserLoadSuccess)
-                                          .user
-                                          .account
-                                          .userName;
+                            return ListTile(
+                              title: Text(partsList.name),
+                              subtitle: Text("PHP $price"),
+                              trailing: PopupMenuButton<String>(
+                                onSelected: (value) async {
+                                  if (value == "edit") {
+                                    context.goNamed("parts-list-edit", params: {
+                                      "partsListId": partsList.id,
+                                    });
+                                  } else if (value == "delete") {
+                                    final userName =
+                                        (userBloc.state as UserLoadSuccess)
+                                            .user
+                                            .account
+                                            .userName;
 
-                                  void deleteIt() =>
-                                      context.read<PartsListsBloc>().add(
-                                            PartsListsForUserDeleted(
-                                              partsListId: partsList.id,
-                                              userName: userName,
-                                            ),
-                                          );
+                                    void deleteIt() =>
+                                        context.read<PartsListsBloc>().add(
+                                              PartsListsForUserDeleted(
+                                                partsListId: partsList.id,
+                                                userName: userName,
+                                              ),
+                                            );
 
-                                  final result = await showDialog<bool?>(
-                                    context: context,
-                                    builder: (context) => ConfirmationDialog(
-                                      titleText:
-                                          "Delete Part List ${partsList.name}?",
-                                      contentText:
-                                          "This action is irreversible.",
-                                    ),
-                                  );
+                                    final result = await showDialog<bool?>(
+                                      context: context,
+                                      builder: (context) => ConfirmationDialog(
+                                        titleText:
+                                            "Delete Part List ${partsList.name}?",
+                                        contentText:
+                                            "This action is irreversible.",
+                                      ),
+                                    );
 
-                                  if (result == true) deleteIt();
-                                }
-                              },
-                              itemBuilder: (context) => [
-                                const PopupMenuItem(
-                                  value: "edit",
-                                  child: Text("Edit"),
-                                ),
-                                const PopupMenuItem(
-                                  value: "delete",
-                                  child: Text("Delete"),
-                                ),
-                              ],
+                                    if (result == true) deleteIt();
+                                  }
+                                },
+                                itemBuilder: (context) => [
+                                  const PopupMenuItem(
+                                    value: "edit",
+                                    child: Text("Edit"),
+                                  ),
+                                  const PopupMenuItem(
+                                    value: "delete",
+                                    child: Text("Delete"),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        );
+                      } else {
+                        return Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: const [
+                            Text(
+                              "You have no parts lists, click the + button to create one",
                             ),
-                          );
-                        },
+                          ],
+                        );
+                      }
+                    } else if (state is PartsListsInitial ||
+                        state is PartsListsLoadInProgress) {
+                      return Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: const [
+                          CircularProgressIndicator(),
+                          SizedBox(
+                            height: 32,
+                          ),
+                          Text("Loading Parts List"),
+                        ],
                       );
                     } else {
                       return Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         crossAxisAlignment: CrossAxisAlignment.center,
-                        children: const [
-                          Text(
-                              "You have no parts lists, click the + button to create one"),
+                        children: [
+                          const Text("Error encountered when loading"),
+                          const SizedBox(
+                            height: 32,
+                          ),
+                          TextButton(
+                            onPressed: () {
+                              final userName = (context.read<UserBloc>().state
+                                      as UserLoadSuccess)
+                                  .user
+                                  .account
+                                  .userName;
+
+                              context.read<PartsListsBloc>().add(
+                                    PartsListsForUserLoaded(
+                                      userName: userName,
+                                    ),
+                                  );
+                            },
+                            child: const Text("Reload"),
+                          ),
                         ],
                       );
                     }
-                  } else if (state is PartsListsInitial ||
-                      state is PartsListsLoadInProgress) {
-                    return Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: const [
-                        CircularProgressIndicator(),
-                        SizedBox(
-                          height: 32,
-                        ),
-                        Text("Loading Parts List"),
-                      ],
-                    );
-                  } else {
-                    return Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        const Text("Error encountered when loading"),
-                        const SizedBox(
-                          height: 32,
-                        ),
-                        TextButton(
-                          onPressed: () {
-                            final userName = (context.read<UserBloc>().state
-                                    as UserLoadSuccess)
-                                .user
-                                .account
-                                .userName;
-
-                            context.read<PartsListsBloc>().add(
-                                PartsListsForUserLoaded(userName: userName));
-                          },
-                          child: const Text("Reload"),
-                        ),
-                      ],
-                    );
-                  }
-                },
-              );
-            }),
+                  },
+                );
+              },
+            ),
           ),
         ),
         if (showLoadingScreen)
