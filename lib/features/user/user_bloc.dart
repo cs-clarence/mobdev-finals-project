@@ -73,11 +73,13 @@ class UserUpdated extends UserEvent {
   final String? newLastName;
   final String? newMiddleName;
   final String? newNameSuffix;
+  final int? newAccessLevel;
 
   const UserUpdated({
     required this.userName,
     this.newUserName,
     this.newEmail,
+    this.newAccessLevel,
     this.newPassword,
     this.newFirstName,
     this.newLastName,
@@ -158,6 +160,7 @@ class UserBloc extends Bloc<UserEvent, UserState> {
           newLastName: event.newLastName,
           newFirstName: event.newFirstName,
           newEmail: event.newEmail,
+          newAccessLevel: event.newAccessLevel,
           newUserName: event.newUserName,
         );
       } on UserRepositoryException catch (e) {

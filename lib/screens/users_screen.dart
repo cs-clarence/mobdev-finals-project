@@ -61,84 +61,114 @@ class UsersScreen extends StatelessWidget {
           final users = userService.getAllUsers();
 
           return FutureBuilder<Iterable<UserModel>>(
-              future: users,
-              builder: (context, snapshot) {
-                if (snapshot.hasData) {
-                  return SingleChildScrollView(
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: DataTable(
-                        columns: const [
-                          DataColumn(label: Text("Action")),
-                          DataColumn(label: Text("UserName")),
-                          DataColumn(label: Text("Email")),
-                          DataColumn(label: Text("Password")),
-                          DataColumn(label: Text("Access Level")),
-                          DataColumn(label: Text("First Name")),
-                          DataColumn(label: Text("Middle Name")),
-                          DataColumn(label: Text("Last Name")),
-                          DataColumn(label: Text("Name Suffix")),
-                        ],
-                        rows: [
-                          for (final user in snapshot.data!)
-                            DataRow(cells: [
-                              DataCell(PopupMenuButton<String>(
-                                onSelected: (value) async {
-                                  if (value == "delete") {
-                                    final currentUserUserName = (context
-                                            .read<UserBloc>()
-                                            .state as UserLoadSuccess)
+            future: users,
+            builder: (context, snapshot) {
+              if (snapshot.hasData) {
+                return SingleChildScrollView(
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: DataTable(
+                      columns: const [
+                        DataColumn(label: Text("Action")),
+                        DataColumn(label: Text("UserName")),
+                        DataColumn(label: Text("Email")),
+                        DataColumn(label: Text("Password")),
+                        DataColumn(label: Text("Access Level")),
+                        DataColumn(label: Text("First Name")),
+                        DataColumn(label: Text("Middle Name")),
+                        DataColumn(label: Text("Last Name")),
+                        DataColumn(label: Text("Name Suffix")),
+                      ],
+                      rows: [
+                        for (final user in snapshot.data!)
+                          DataRow(cells: [
+                            DataCell(PopupMenuButton<String>(
+                              onSelected: (value) async {
+                                final userBloc = context.read<UserBloc>();
+                                final currentLoggedInUserUserName =
+                                    (userBloc.state as UserLoadSuccess)
                                         .user
                                         .account
                                         .userName;
-                                    final toBeDeletedUserUserName =
-                                        user.account.userName;
-                                    final logOutUser = currentUserUserName ==
-                                        toBeDeletedUserUserName;
+                                void goBackToPartListScreen() => context.pop();
+                                final isSameUserAsLoggedIn = user.account.userName ==
+                                    currentLoggedInUserUserName;
+                                if (value == "delete") {
+                                  void deleteIt() => context
+                                      .read<UsersService>()
+                                      .deleteUser(user.account.userName);
+                                  void logOut() => context
+                                      .read<UserBloc>()
+                                      .add(const UserLoggedOut());
 
-                                    void deleteIt() => context
-                                        .read<UsersService>()
-                                        .deleteUser(user.account.userName);
-                                    void logOut() => context
-                                        .read<UserBloc>()
-                                        .add(const UserLoggedOut());
+                                  final result = await showDialog<bool?>(
+                                    context: context,
+                                    builder: (context) => ConfirmationDialog(
+                                      titleText:
+                                          "Delete User ${user.account.userName} ${isSameUserAsLoggedIn ? "And Log Out " : ""}?",
+                                      contentText:
+                                          "This action is irreversible.",
+                                    ),
+                                  );
 
-                                    final result = await showDialog<bool?>(
-                                      context: context,
-                                      builder: (context) => ConfirmationDialog(
-                                        titleText:
-                                            "Delete User ${user.account.userName} ${logOutUser ? "And Log Out " : ""}?",
-                                        contentText:
-                                            "This action is irreversible.",
-                                      ),
-                                    );
-
-                                    if (result == true) deleteIt();
-                                    if (logOutUser && result == true) {
-                                      logOut();
-                                    }
-                                  } else if (value == "edit") {
-                                    final result =
-                                        await showDialog<Map<String, dynamic>?>(
-                                      context: context,
-                                      builder: (context) {
-                                        return UserFormDialog(
-                                          initialValue: {
-                                            ...user.account.toJson(),
-                                            ...user.profile.toJson(),
-                                          },
-                                          titleText: "EDIT USER",
-                                          submitButtonText: "Update",
-                                          mode: UserFormMode.edit,
+                                  if (result == true) deleteIt();
+                                  if (isSameUserAsLoggedIn && result == true) {
+                                    logOut();
+                                  }
+                                } else if (value == "edit") {
+                                  final result =
+                                      await showDialog<Map<String, dynamic>?>(
+                                    context: context,
+                                    builder: (context) {
+                                      return UserFormDialog(
+                                        initialValue: {
+                                          ...user.account.toJson(),
+                                          ...user.profile.toJson(),
+                                        },
+                                        titleText: "EDIT USER",
+                                        submitButtonText: "Update",
+                                        mode: UserFormMode.edit,
+                                      );
+                                    },
+                                  );
+                                  if (result != null) {
+                                    final profile =
+                                        ProfileModel.fromJson(result);
+                                    final account =
+                                        AccountModel.fromJson(result);
+                                    try {
+                                      if (isSameUserAsLoggedIn) {
+                                        userBloc.add(
+                                          UserUpdated(
+                                            userName:
+                                                currentLoggedInUserUserName,
+                                            newAccessLevel: account.accessLevel,
+                                            newUserName: account.userName,
+                                            newEmail: account.email,
+                                            newFirstName: profile.firstName,
+                                            newPassword: account.password,
+                                            newNameSuffix: profile.nameSuffix,
+                                            newMiddleName: profile.middleName,
+                                            newLastName: profile.lastName,
+                                          ),
                                         );
-                                      },
-                                    );
-                                    if (result != null) {
-                                      final profile =
-                                          ProfileModel.fromJson(result);
-                                      final account =
-                                          AccountModel.fromJson(result);
-                                      try {
+
+                                        if (user.account.accessLevel < 10) {
+                                          await showDialog(
+                                            context: context,
+                                            builder: (context) {
+                                              return const InformationDialog(
+                                                titleText:
+                                                    "You will now be redirected to Parts List screen",
+                                                contentText:
+                                                    "You no longer have access to this screen",
+                                              );
+                                            },
+                                          );
+                                          userService.invalidateCache();
+                                          goBackToPartListScreen();
+                                        }
+                                      } else {
                                         await userService.updateUser(
                                           userName: user.account.userName,
                                           newAccessLevel: account.accessLevel,
@@ -150,49 +180,50 @@ class UsersScreen extends StatelessWidget {
                                           newMiddleName: profile.middleName,
                                           newLastName: profile.lastName,
                                         );
-                                      } on UserRepositoryException catch (e) {
-                                        await showDialog(
-                                          context: context,
-                                          builder: (context) {
-                                            return InformationDialog(
-                                              titleText: "Can't Update User",
-                                              contentText: e.message,
-                                            );
-                                          },
-                                        );
                                       }
-
+                                    } on UserRepositoryException catch (e) {
+                                      await showDialog(
+                                        context: context,
+                                        builder: (context) {
+                                          return InformationDialog(
+                                            titleText: "Can't Update User",
+                                            contentText: e.message,
+                                          );
+                                        },
+                                      );
                                     }
                                   }
-                                },
-                                itemBuilder: (context) => const [
-                                  PopupMenuItem(
-                                    value: "edit",
-                                    child: Text("Edit"),
-                                  ),
-                                  PopupMenuItem(
-                                    value: "delete",
-                                    child: Text("Delete"),
-                                  ),
-                                ],
-                              )),
-                              DataCell(Text(user.account.userName)),
-                              DataCell(Text(user.account.email)),
-                              DataCell(Text(user.account.password)),
-                              DataCell(Text("${user.account.accessLevel}")),
-                              DataCell(Text(user.profile.firstName)),
-                              DataCell(Text(user.profile.middleName ?? "")),
-                              DataCell(Text(user.profile.lastName)),
-                              DataCell(Text(user.profile.nameSuffix ?? "")),
-                            ]),
-                        ],
-                      ),
+                                }
+                              },
+                              itemBuilder: (context) => const [
+                                PopupMenuItem(
+                                  value: "edit",
+                                  child: Text("Edit"),
+                                ),
+                                PopupMenuItem(
+                                  value: "delete",
+                                  child: Text("Delete"),
+                                ),
+                              ],
+                            )),
+                            DataCell(Text(user.account.userName)),
+                            DataCell(Text(user.account.email)),
+                            DataCell(Text(user.account.password)),
+                            DataCell(Text("${user.account.accessLevel}")),
+                            DataCell(Text(user.profile.firstName)),
+                            DataCell(Text(user.profile.middleName ?? "")),
+                            DataCell(Text(user.profile.lastName)),
+                            DataCell(Text(user.profile.nameSuffix ?? "")),
+                          ]),
+                      ],
                     ),
-                  );
-                } else {
-                  return const CircularProgressIndicator();
-                }
-              });
+                  ),
+                );
+              } else {
+                return const CircularProgressIndicator();
+              }
+            },
+          );
         },
       ),
     );

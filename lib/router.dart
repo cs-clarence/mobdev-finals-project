@@ -13,19 +13,12 @@ import "./screens/login_screen.dart";
 import "./screens/signup_screen.dart";
 
 GoRouter buildRouter(BuildContext context) {
+  final userBloc = context.watch<UserBloc>();
+
   return GoRouter(
     debugLogDiagnostics: true,
     urlPathStrategy: UrlPathStrategy.path,
     initialLocation: "/login",
-    navigatorBuilder: (context, state, child) =>
-        BlocListener<UserBloc, UserState>(
-      listener: (context, state) {
-        if (state is UserInitial) {
-          context.goNamed("login");
-        }
-      },
-      child: child,
-    ),
     routes: [
       GoRoute(
         path: "/parts-list",

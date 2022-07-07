@@ -45,6 +45,7 @@ dependencies:
   form_builder_extra_fields: ^8.1.0
   provider: ^6.0.3
   uuid: ^3.0.6
+  sentry_flutter: ^6.6.3
 
 dev_dependencies:
   flutter_test:

@@ -34,137 +34,156 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final userBloc = context.read<UserBloc>();
+    final userBloc = context.watch<UserBloc>();
 
     final required = ValidationBuilder().required().build();
 
-    assert(
-      userBloc.state is UserLoadSuccess,
-      "User should be logged in before being able to open this screen",
-    );
+    if (userBloc.state is UserLoadSuccess) {
+      final user = (userBloc.state as UserLoadSuccess).user;
+      final originalUserName = user.account.userName;
 
-    final user = (userBloc.state as UserLoadSuccess).user;
-    final originalUserName = user.account.userName;
+      final userMap = <String, dynamic>{
+        ...user.account.toJson(),
+        ...user.profile.toJson(),
+      };
 
-    final userMap = {...user.account.toJson(), ...user.profile.toJson()};
-
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("User Settings"),
-      ),
-      body: Center(
-        child: SingleChildScrollView(
-          child: Card(
-            child: Padding(
-              padding: const EdgeInsets.all(32.0),
-              child: FormBuilder(
-                initialValue: userMap,
-                key: _formKey,
-                child: Column(
-                  children: [
-                    Text(
-                      "Account",
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    const SizedBox(height: 16),
-                    FormBuilderUserNameField(
-                      name: "userName",
-                    ),
-                    const SizedBox(height: 32),
-                    FormBuilderEmailField(
-                      name: "email",
-                    ),
-                    const SizedBox(height: 32),
-                    const FormBuilderPasswordField(
-                      name: "password",
-                    ),
-                    const SizedBox(height: 32),
-                    const Divider(),
-                    const SizedBox(height: 32),
-                    Text(
-                      "Profile",
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    const SizedBox(height: 16),
-                    FormBuilderTextField(
-                      name: "firstName",
-                      validator: required,
-                      decoration: const InputDecoration(
-                        labelText: "First Name",
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text("User Settings"),
+        ),
+        body: Center(
+          child: SingleChildScrollView(
+            child: Card(
+              child: Padding(
+                padding: const EdgeInsets.all(32.0),
+                child: FormBuilder(
+                  initialValue: userMap,
+                  key: _formKey,
+                  child: Column(
+                    children: [
+                      Text(
+                        "Account",
+                        style: Theme.of(context).textTheme.titleMedium,
                       ),
-                    ),
-                    const SizedBox(height: 32),
-                    FormBuilderTextField(
-                      name: "middleName",
-                      decoration: const InputDecoration(
-                        labelText: "Middle Name",
+                      const SizedBox(height: 16),
+                      FormBuilderUserNameField(
+                        name: "userName",
                       ),
-                    ),
-                    const SizedBox(height: 32),
-                    FormBuilderTextField(
-                      name: "lastName",
-                      validator: required,
-                      decoration: const InputDecoration(
-                        labelText: "Last Name",
+                      const SizedBox(height: 32),
+                      FormBuilderEmailField(
+                        name: "email",
                       ),
-                    ),
-                    const SizedBox(height: 32),
-                    FormBuilderTextField(
-                      name: "nameSuffix",
-                      decoration: const InputDecoration(
-                        labelText: "Name Suffix",
+                      const SizedBox(height: 32),
+                      const FormBuilderPasswordField(
+                        name: "password",
                       ),
-                    ),
-                    const SizedBox(height: 32),
-                    OutlinedButton(
-                      onPressed: () async {
-                        if (_formKey.currentState!.validate()) {
-                          final userName = _formKey.currentState!
-                              .getTransformedValue("userName");
-                          final password = _formKey.currentState!
-                              .getTransformedValue("password");
-                          final email = _formKey.currentState!
-                              .getTransformedValue("email");
-                          final firstName = _formKey.currentState!
-                              .getTransformedValue("firstName");
-                          final middleName = _formKey.currentState!
-                              .getTransformedValue("middleName");
-                          final lastName = _formKey.currentState!
-                              .getTransformedValue("lastName");
-                          final nameSuffix = _formKey.currentState!
-                              .getTransformedValue("nameSuffix");
+                      const SizedBox(height: 32),
+                      const Divider(),
+                      const SizedBox(height: 32),
+                      Text(
+                        "Profile",
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      const SizedBox(height: 16),
+                      FormBuilderTextField(
+                        name: "firstName",
+                        validator: required,
+                        decoration: const InputDecoration(
+                          labelText: "First Name",
+                        ),
+                      ),
+                      const SizedBox(height: 32),
+                      FormBuilderTextField(
+                        name: "middleName",
+                        decoration: const InputDecoration(
+                          labelText: "Middle Name",
+                        ),
+                      ),
+                      const SizedBox(height: 32),
+                      FormBuilderTextField(
+                        name: "lastName",
+                        validator: required,
+                        decoration: const InputDecoration(
+                          labelText: "Last Name",
+                        ),
+                      ),
+                      const SizedBox(height: 32),
+                      FormBuilderTextField(
+                        name: "nameSuffix",
+                        decoration: const InputDecoration(
+                          labelText: "Name Suffix",
+                        ),
+                      ),
+                      const SizedBox(height: 32),
+                      OutlinedButton(
+                        onPressed: () async {
+                          if (_formKey.currentState!.validate()) {
+                            final userName = _formKey.currentState!
+                                .getTransformedValue("userName");
+                            final password = _formKey.currentState!
+                                .getTransformedValue("password");
+                            final email = _formKey.currentState!
+                                .getTransformedValue("email");
+                            final firstName = _formKey.currentState!
+                                .getTransformedValue("firstName");
+                            final middleName = _formKey.currentState!
+                                .getTransformedValue("middleName");
+                            final lastName = _formKey.currentState!
+                                .getTransformedValue("lastName");
+                            final nameSuffix = _formKey.currentState!
+                                .getTransformedValue("nameSuffix");
 
-                          userBloc.add(
-                            UserUpdated(
-                              userName: originalUserName,
-                              newUserName: userName,
-                              newEmail: email,
-                              newFirstName: firstName,
-                              newLastName: lastName,
-                              newMiddleName: middleName,
-                              newNameSuffix: nameSuffix,
-                              newPassword: password,
-                            ),
-                          );
+                            userBloc.add(
+                              UserUpdated(
+                                userName: originalUserName,
+                                newUserName: userName,
+                                newEmail: email,
+                                newFirstName: firstName,
+                                newLastName: lastName,
+                                newMiddleName: middleName,
+                                newNameSuffix: nameSuffix,
+                                newPassword: password,
+                              ),
+                            );
 
-                          await showDialog(
-                            context: context,
-                            builder: (context) => const InformationDialog(
-                              titleText: "Saved",
-                              contentText: "Your settings are saved.",
-                            ),
-                          );
-                        }
-                      },
-                      child: const Text("Save"),
-                    ),
-                  ],
+                            await showDialog(
+                              context: context,
+                              builder: (context) => const InformationDialog(
+                                titleText: "Saved",
+                                contentText: "Your settings are saved.",
+                              ),
+                            );
+                          }
+                        },
+                        child: const Text("Save"),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
           ),
         ),
-      ),
-    );
+      );
+    } else {
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text("User Settings"),
+        ),
+        body: Center(
+          child: Column(
+            children: [
+              const Text("You are not logged in."),
+              TextButton(
+                onPressed: () {
+                  context.goNamed("login");
+                },
+                child: const Text("Login"),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
   }
 }

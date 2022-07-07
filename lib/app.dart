@@ -36,39 +36,37 @@ class App extends StatelessWidget {
         RepositoryProvider<PartsListRepository>(
           create: (context) => SqlitePartsListRepository(db),
         ),
-      ],
-      child: MultiProvider(
-        providers: [
-          BlocProvider<UserBloc>(
-            create: (context) => UserBloc(context.read<UserRepository>()),
-          ),
-          BlocProvider<PcPartsBloc>(
-            create: (context) => PcPartsBloc(context.read<PcPartRepository>()),
-          ),
-          BlocProvider<PartsListsBloc>(
-            create: (context) =>
-                PartsListsBloc(context.read<PartsListRepository>()),
-          ),
-          ChangeNotifierProvider(
-            create: (context) => UsersService(context.read<UserRepository>()),
-          ),
-        ],
-        child: Builder(
-          builder: (context) {
-            final router = buildRouter(context);
-
-            return MaterialApp.router(
-              scrollBehavior: CustomScrollBehavior(),
-              routeInformationParser: router.routeInformationParser,
-              routerDelegate: router.routerDelegate,
-              routeInformationProvider: router.routeInformationProvider,
-              themeMode: ThemeMode.dark,
-              theme: ThemeData.light().copyWith(useMaterial3: true),
-              darkTheme: ThemeData.dark().copyWith(useMaterial3: true),
-              title: "PC Parts List",
-            );
-          },
+        ProxyProvider<UserRepository, UserBloc>(
+          update: (context, repo, _) => UserBloc(repo),
+          dispose: (context, bloc) => bloc.close(),
         ),
+        ProxyProvider<PcPartRepository, PcPartsBloc>(
+          update: (context, repo, _) => PcPartsBloc(repo),
+          dispose: (context, bloc) => bloc.close(),
+        ),
+        ProxyProvider<PartsListRepository, PartsListsBloc>(
+          update: (context, repo, _) => PartsListsBloc(repo),
+          dispose: (context, bloc) => bloc.close(),
+        ),
+        ChangeNotifierProvider(
+          create: (context) => UsersService(context.read<UserRepository>()),
+        ),
+      ],
+      child: Builder(
+        builder: (context) {
+          final router = buildRouter(context);
+
+          return MaterialApp.router(
+            scrollBehavior: CustomScrollBehavior(),
+            routeInformationParser: router.routeInformationParser,
+            routerDelegate: router.routerDelegate,
+            routeInformationProvider: router.routeInformationProvider,
+            themeMode: ThemeMode.dark,
+            theme: ThemeData.light().copyWith(useMaterial3: true),
+            darkTheme: ThemeData.dark().copyWith(useMaterial3: true),
+            title: "PC Parts List",
+          );
+        },
       ),
     );
   }

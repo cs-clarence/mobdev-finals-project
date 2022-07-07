@@ -73,4 +73,9 @@ class UsersService extends ChangeNotifier {
 
     return _cachedResults!;
   }
+
+  void invalidateCache() {
+    _isDirty = true;
+    notifyListeners();
+  }
 }

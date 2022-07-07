@@ -34,15 +34,14 @@ class LoginScreen extends StatelessWidget {
                 }
 
                 if (state is UserLoadSuccess) {
-                  context.pushNamed("parts-list");
+
                   context.read<PartsListsBloc>().add(
                         PartsListsForUserLoaded(
                           userName: state.user.account.userName,
                         ),
                       );
-                  context.read<PcPartsBloc>().add(
-                        const PcPartsLoaded(),
-                      );
+                  context.read<PcPartsBloc>().add(const PcPartsLoaded());
+                  context.read<UsersService>().invalidateCache();
                 }
               },
               child: FormBuilder(
@@ -80,11 +79,23 @@ class LoginScreen extends StatelessWidget {
                                 .getTransformedValue("userNameOrEmail");
                             final password = _formKey.currentState!
                                 .getTransformedValue("password");
+                            ScaffoldMessenger.of(context).removeCurrentSnackBar();
+                            context.read<UserBloc>().add(
+                                  UserLoggedIn(
+                                    userNameOrEmail: userNameOrEmail,
+                                    password: password,
+                                  ),
+                                );
 
-                            context.read<UserBloc>().add(UserLoggedIn(
-                                  userNameOrEmail: userNameOrEmail,
-                                  password: password,
-                                ));
+                            void tryGoToPartsList() {
+                              if (context.read<UserBloc>().state
+                                  is UserLoadSuccess) {
+                                context.pushNamed("parts-list");
+                              }
+                            }
+
+                            Future.delayed(const Duration(milliseconds: 100))
+                                .then((value) => tryGoToPartsList());
                           }
                         },
                         child: const Text("Login"),
